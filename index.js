@@ -35,28 +35,12 @@ for (const folder of commandFolders) {
     }
 }
 
+
 //Runs when bot Starts Up
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}!`);
 });
 
-
-//whenever a message is posted in a server, run contents
-client.on('messageCreate', msg => {
-
-    //If message is ping, respond with pong, messages like ping pong or like my ping will not trigger
-    if (msg.content === 'ping') {
-
-        msg.reply('pong');
-    }
-
-    var channel = msg.channelId.toString();
-
-    if ((msg.content === 'hello') && (channel == genChat)) {
-        msg.reply('there');
-    }
-
-});
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
@@ -81,5 +65,3 @@ client.on(Events.InteractionCreate, async interaction => {
 
 //Start up bot using the Config file to get token
 client.login(config.token);
-
-const genChat = config.genChat;
