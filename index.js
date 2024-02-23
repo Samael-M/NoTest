@@ -1,15 +1,9 @@
-// Full code at :https://github.com/Rademero/DiscordBot1
-// https://www.howtogeek.com/364225/how-to-make-your-own-discord-bot/
-
-// https://discordapp.com/oauth2/authorize?client_id=1209895589018476544&scope=bot
-
-
-const config = require('./config.json'); // Retrieves the Config file from active directory
+const config = require('./config.json'); // Make sure there is a config with token for bot to work
 
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js'); // runs the discord.js script for activating bot
+const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 
 const client = new Client({ // set premissons of bot
     intents: [
@@ -19,7 +13,6 @@ const client = new Client({ // set premissons of bot
         GatewayIntentBits.GuildMembers, // Adding and Removing members
         GatewayIntentBits.GuildMessageReactions, //Allows reactions
     ],
-    // For more info go here: https://discord-api-types.dev/api/discord-api-types-v10/enum/GatewayIntentBits
 });
 
 client.commands = new Collection();
