@@ -12,6 +12,7 @@ const client = new Client({ // set premissons of bot
         GatewayIntentBits.MessageContent, // Allows reading messages
         GatewayIntentBits.GuildMembers, // Adding and Removing members
         GatewayIntentBits.GuildMessageReactions, //Allows reactions
+        GatewayIntentBits.GuildVoiceStates,
     ],
 });
 
