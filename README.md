@@ -9,6 +9,6 @@ commands:
 
 /roles - Give three emoji reation options which then will give/take away roles
 
-/set-timer - Enter an amount of minutes, Bot joins voice channel and will sound alarm when time is up
+/set-timer - Enter an amount of time, Bot joins voice channel and will sound alarm when time is up
 
 /leave - Makes bot leave voice channel
