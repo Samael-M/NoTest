@@ -8,9 +8,22 @@ module.exports = {
         .setName('set-timer')
         .setDescription('Set a timer')
         .addIntegerOption(option =>
+            option.setName('hours')
+                .setDescription('hours to set')
+                .setMinValue(0)
+                .setRequired(true))
+        .addIntegerOption(option =>
             option.setName('minutes')
-            .setDescription('minutes to set')
-            .setRequired(true)),
+                .setDescription('minutes to set')
+                .setMaxValue(59)
+                .setMinValue(0)
+                .setRequired(true))
+        .addIntegerOption(option =>
+            option.setName('seconds')
+                .setDescription('seconds to set')
+                .setMaxValue(59)
+                .setMinValue(0)
+                .setRequired(true)),
     async execute(interaction) {
         interaction.reply('Setting timer');
 
@@ -22,7 +35,11 @@ module.exports = {
             adapterCreator: channel.guild.voiceAdapterCreator,
         });
 
-        const timeToSet = interaction.options.getInteger('minutes') * 60000;
+        const hours = interaction.options.getInteger('hours') * 3600000;
+        const minutes = interaction.options.getInteger('minutes') * 60000;
+        const seconds = interaction.options.getInteger('seconds') * 1000;
+        const timeToSet = hours + minutes + seconds;
+
         console.log(`Timer will go off in ${timeToSet} miliseconds or ${interaction.options.getInteger('minutes')} minutes`);
         var start = Date.now();
         console.log(start);
@@ -30,10 +47,10 @@ module.exports = {
             if (checkExpired(start, timeToSet)) {
                 console.log('TIMER GOING OFF');
                 console.log(`Timer started at ${start}, it is now ${Date.now()}`);
-                alarm(connection, channel);
+                //alarm(connection, channel);
                 clearInterval(intervalID);
             }
-          }, 300);
+          }, 1000);
 
     },
 };
@@ -66,7 +83,7 @@ function checkExpired(startTime, totalTime) {
     const curTime = Date.now();
 
     var timeDifference = Math.abs(curTime - startTime);
-    console.log(`It has been ${timeDifference} miliseconds`);
+    console.log(`It has been ${timeDifference / 1000.0} seconds`);
     if (timeDifference > totalTime) {
         return true;
     } else {
