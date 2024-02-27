@@ -4,6 +4,7 @@ const { createAudioPlayer, createAudioResource, NoSubscriberBehavior } = require
 const path = require('node:path');
 
 const timers = {};
+const holds = {};
 
 module.exports = {
     category: 'timer',
@@ -48,9 +49,9 @@ module.exports = {
         if (interaction.options.getSubcommand() === 'set') {
             setTimer(interaction);
         } else if(interaction.options.getSubcommand() === 'pause') {
-            pasueTimer();
+            pasueTimer(interaction);
         } else if(interaction.options.getSubcommand() === 'resume') {
-            resumeTimer();
+            resumeTimer(interaction);
         } else if(interaction.options.getSubcommand() === 'cancel') {
             cancelTimer(interaction);
         }
@@ -76,8 +77,8 @@ async function setTimer(interaction)  {
     await interaction.deferReply();
 
     const key = `${interaction.channelId}`;
-    if (timers[key]) {
-        clearInterval(timers[key]);
+    if (timers[key].ID) {
+        clearInterval(timers[key].ID);
     }
 
     const hours = interaction.options.getInteger('hours') * 3600000;
@@ -107,7 +108,7 @@ async function setTimer(interaction)  {
 
     console.log(`Timer will go off in ${timeToSet} miliseconds or ${timeToSet / 60000} minutes`);
     var start = Date.now();
-    timers[key] = setInterval(() => {
+    const intervalID = setInterval(() => {
         if (checkExpired(start, timeToSet)) {
             if(!channel) { 
                 console.log('No connection! Timer stoped');
@@ -117,6 +118,12 @@ async function setTimer(interaction)  {
             clearInterval(timers[key]);
         }
         }, 1000);
+    
+    timers[key] = {
+        ID: timers[key],
+        startTime: start,
+        remainingTime: Date.now() - start
+    };
 }
 
 
