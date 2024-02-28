@@ -11,11 +11,12 @@ commands:
 
 /timer 
 
-  set - enter amounts of hours, minutes, seconds to set timer for\n
+  set - enter amounts of hours, minutes, seconds to set timer for
   pause - pause current timer
   
   resume - resume current timer
   
   cancel - cancel current timer
+  
 
 /leave - Makes bot leave voice channel
