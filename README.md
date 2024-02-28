@@ -10,9 +10,9 @@ commands:
 /roles - Give three emoji reation options which then will give/take away roles
 
 /timer<br />
-  set - enter amounts of hours, minutes, seconds to set timer for<br />
-  pause - pause current timer<br />
-  resume - resume current timer<br />
-  cancel - cancel current timer<br />
+&emsp;set - enter amounts of hours, minutes, seconds to set timer for<br />
+&emsp;pause - pause current timer<br />
+&emsp;resume - resume current timer<br />
+&emsp;cancel - cancel current timer<br />
   
 /leave - Makes bot leave voice channel
