@@ -11,8 +11,7 @@ commands:
 
 /timer 
 
-  set - enter amounts of hours, minutes, seconds to set timer for
-  
+  set - enter amounts of hours, minutes, seconds to set timer for\n
   pause - pause current timer
   
   resume - resume current timer
