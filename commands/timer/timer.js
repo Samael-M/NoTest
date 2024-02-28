@@ -112,7 +112,7 @@ async function setTimer(interaction, key, channel)  {
     if (timeToSet == 0) { 
         await interaction.editReply('Can\'t set a timer with no duration!');
         return;
-    } else { await interaction.editReply('`You have set a timer for ${hours} hours, ${minutes} minutes, ${seconds} seconds`'); }
+    } else { await interaction.editReply(`You have set a timer for ${hours} hours, ${minutes} minutes, ${seconds} seconds`); }
 
     const connection = joinVoiceChannel({
         channelId: channel.id,
