@@ -45,25 +45,56 @@ module.exports = {
             .setName('cancel')
             .setDescription('cancel the timer')),
     async execute(interaction) {
+        const key = `${interaction.channelId}`;
 
         if (interaction.options.getSubcommand() === 'set') {
-            setTimer(interaction);
+            setTimer(interaction, key);
         } else if(interaction.options.getSubcommand() === 'pause') {
-            pasueTimer(interaction);
+            pauseTimer(interaction, key);
         } else if(interaction.options.getSubcommand() === 'resume') {
-            resumeTimer(interaction);
+            resumeTimer(interaction, key);
         } else if(interaction.options.getSubcommand() === 'cancel') {
-            cancelTimer(interaction);
+            cancelTimer(interaction, key);
         }
         
     },
 };
 
-function pasueTimer() {}
-function resumeTimer() {}
+async function pauseTimer(interaction, key) {
+    if (timers[key]) {
+        const timeUsed = Date.now() - timers[key].startTime;
+        timers[key].timeRemaining = timers[key].totalTime - timeUsed;
+        clearInterval(timers[key].ID);
+        await interaction.reply(`Timer paused! ${timers[key].timeRemaining / 60000} minutes left`);
+    } else {
+        await interaction.reply('No timer to pause.');
+    }
+}
+async function resumeTimer(interaction, key) {
+    if (timers[key]) {
+        timers[key].startTime = Date.now();
 
-async function cancelTimer(interaction) {
-    const key = `${interaction.channelId}`;
+        timers[key].ID = setInterval(() => {
+            if(!interaction.member.voice.channel) { 
+                console.log('No connection! Timer stoped');
+                return; 
+            }
+            if (checkExpired(timers[key].startTime, timers[key].timeRemaining)) {
+                
+                console.log('TIMER GOING OFF');
+                //alarm(connection, channel);
+                clearInterval(timers[key].ID);
+            }
+        }, 1000);
+
+        await interaction.reply('Timer resumed!');
+    } else {
+        await interaction.reply('No timer to resume.');
+    } 
+}
+
+async function cancelTimer(interaction, key) {
+
     if (timers[key]) {
         clearInterval(timers[key]);
         delete timers[key]; 
@@ -73,11 +104,10 @@ async function cancelTimer(interaction) {
     }
 }
 
-async function setTimer(interaction)  {
+async function setTimer(interaction, key)  {
     await interaction.deferReply();
 
-    const key = `${interaction.channelId}`;
-    if (timers[key].ID) {
+    if (timers[key]) {
         clearInterval(timers[key].ID);
     }
 
@@ -109,20 +139,23 @@ async function setTimer(interaction)  {
     console.log(`Timer will go off in ${timeToSet} miliseconds or ${timeToSet / 60000} minutes`);
     var start = Date.now();
     const intervalID = setInterval(() => {
+        if(!channel) { 
+            console.log('No connection! Timer stoped');
+            return; 
+        }
         if (checkExpired(start, timeToSet)) {
-            if(!channel) { 
-                console.log('No connection! Timer stoped');
-                return; }
+            
             console.log('TIMER GOING OFF');
             //alarm(connection, channel);
             clearInterval(timers[key]);
         }
-        }, 1000);
+    }, 1000);
     
     timers[key] = {
-        ID: timers[key],
+        ID: intervalID,
         startTime: start,
-        remainingTime: Date.now() - start
+        totalTime: timeToSet,
+        timeRemaining : timeToSet //was just set
     };
 }
 
