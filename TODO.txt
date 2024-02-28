@@ -1,6 +1,5 @@
 TODO:
     Timer   - implement stopwatch
-            - implement time remaining command
             - Resume tells you how much time is left
             - How should the timer going off work? Currently when you set a timer, the bot joins a voice channel and will
             sound off a audible alarm. Because it was designed this way, I have the cancel timer command disconnect the bot from 
