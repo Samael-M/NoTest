@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel } = require('@discordjs/voice');
-const { createAudioPlayer, createAudioResource, NoSubscriberBehavior } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, getVoiceConnection } = require('@discordjs/voice');
 const path = require('node:path');
 
 const timers = {};
@@ -46,15 +46,17 @@ module.exports = {
             .setDescription('cancel the timer')),
     async execute(interaction) {
         const key = `${interaction.channelId}`;
+        const channel = interaction.member.voice.channel;
+        const connection = getVoiceConnection(interaction.guild.id);
 
         if (interaction.options.getSubcommand() === 'set') {
-            setTimer(interaction, key);
+            setTimer(interaction, key, channel);
         } else if(interaction.options.getSubcommand() === 'pause') {
             pauseTimer(interaction, key);
         } else if(interaction.options.getSubcommand() === 'resume') {
-            resumeTimer(interaction, key);
+            resumeTimer(interaction, key, channel);
         } else if(interaction.options.getSubcommand() === 'cancel') {
-            cancelTimer(interaction, key);
+            cancelTimer(interaction, key, connection);
         }
         
     },
@@ -64,28 +66,18 @@ async function pauseTimer(interaction, key) {
     if (timers[key]) {
         const timeUsed = Date.now() - timers[key].startTime;
         timers[key].timeRemaining = timers[key].totalTime - timeUsed;
+
         clearInterval(timers[key].ID);
         await interaction.reply(`Timer paused! ${timers[key].timeRemaining / 60000} minutes left`);
     } else {
         await interaction.reply('No timer to pause.');
     }
 }
-async function resumeTimer(interaction, key) {
+async function resumeTimer(interaction, key, channel) {
     if (timers[key]) {
         timers[key].startTime = Date.now();
-
-        timers[key].ID = setInterval(() => {
-            if(!interaction.member.voice.channel) { 
-                console.log('No connection! Timer stoped');
-                return; 
-            }
-            if (checkExpired(timers[key].startTime, timers[key].timeRemaining)) {
-                
-                console.log('TIMER GOING OFF');
-                //alarm(connection, channel);
-                clearInterval(timers[key].ID);
-            }
-        }, 1000);
+        const connection = getVoiceConnection(interaction.guild.id);
+        timers[key].ID = timer(timers[key].startTime, timers[key].timeRemaining, key, channel, connection);
 
         await interaction.reply('Timer resumed!');
     } else {
@@ -99,15 +91,16 @@ async function cancelTimer(interaction, key) {
         clearInterval(timers[key]);
         delete timers[key]; 
         await interaction.reply('Timer cancelled!');
+        if(connection) { connection.destroy(); }
     } else {
         await interaction.reply('No timer to cancel.');
     }
 }
 
-async function setTimer(interaction, key)  {
+async function setTimer(interaction, key, channel)  {
     await interaction.deferReply();
 
-    if (timers[key]) {
+    if (timers[key]) { //do we want the new timer to automaticall override old?
         clearInterval(timers[key].ID);
     }
 
@@ -115,21 +108,12 @@ async function setTimer(interaction, key)  {
     const minutes = interaction.options.getInteger('minutes') * 60000;
     const seconds = interaction.options.getInteger('seconds') * 1000;
 
-    // var hours = 0;   
-    // var minutes = 0;
-    // var seconds = 0;
-
-    // if (getHours) { hours = getHours * 3600000; }            //fields are supposed to be options, but having issues with that
-    // if (getMinutes) { const minutes = getMinutes * 60000; } 
-    // if (getSeconds) { const seconds = getSeconds * 1000; } 
-
     const timeToSet = hours + minutes + seconds;
     if (timeToSet == 0) { 
-        await interaction.editReply(`You have to set a time! You set timer for ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
+        await interaction.editReply('Can\'t set a timer with no duration!');
         return;
-    } else { await interaction.editReply('Setting timer'); }
+    } else { await interaction.editReply('`You have set a timer for ${hours} hours, ${minutes} minutes, ${seconds} seconds`'); }
 
-    const channel = interaction.member.voice.channel;
     const connection = joinVoiceChannel({
         channelId: channel.id,
         guildId: channel.guild.id,
@@ -138,18 +122,7 @@ async function setTimer(interaction, key)  {
 
     console.log(`Timer will go off in ${timeToSet} miliseconds or ${timeToSet / 60000} minutes`);
     var start = Date.now();
-    const intervalID = setInterval(() => {
-        if(!channel) { 
-            console.log('No connection! Timer stoped');
-            return; 
-        }
-        if (checkExpired(start, timeToSet)) {
-            
-            console.log('TIMER GOING OFF');
-            //alarm(connection, channel);
-            clearInterval(timers[key]);
-        }
-    }, 1000);
+    const intervalID = timer(start, timeToSet, key, connection);
     
     timers[key] = {
         ID: intervalID,
@@ -159,16 +132,29 @@ async function setTimer(interaction, key)  {
     };
 }
 
+function timer(startTime, timeToSet, key, channel, connection) {
+    return intervalID = setInterval(() => {
+        if(!channel) { 
+            console.log('No connection! Timer stoped');
+            return; 
+        }
+        if (checkExpired(startTime, timeToSet)) {
+            
+            console.log('TIMER GOING OFF');
+            //alarm(connection);
+            clearInterval(intervalID);
+        }
+    }, 1000);
+}
 
-function alarm(connection, channel) {
+
+function alarm(connection) {
     const player = createAudioPlayer();
     const alarmPath = path.join(__dirname, '../..', 'Sound/Alarm.mov');
 
     const resource = createAudioResource(alarmPath, { inlineVolume: true });
     resource.volume.setVolume(1);
     console.log('Volume set to 1');
-
-    const listeners = channel.members.filter(member => !member.user.bot);
 
     connection.subscribe(player); // Subscribe the connection to the player
     player.play(resource);
@@ -184,4 +170,4 @@ function checkExpired(startTime, totalTime) {
     } else {
         return false;
     }
-  }
+}
