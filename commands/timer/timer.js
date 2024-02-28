@@ -2,9 +2,17 @@ const { SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel } = require('@discordjs/voice');
 const { createAudioPlayer, createAudioResource, getVoiceConnection } = require('@discordjs/voice');
 const path = require('node:path');
+const { subscribe } = require('node:diagnostics_channel');
 
 const timers = {};
 const holds = {};
+
+const status = { 
+    running: true,
+    paused: false,
+}
+
+const modulo = (dividend, divisor) => [Math.floor(dividend / divisor), dividend % divisor];
 
 module.exports = {
     category: 'timer',
@@ -34,6 +42,10 @@ module.exports = {
                         .setRequired(false)))
         .addSubcommand(subcommand =>
             subcommand
+            .setName('remaining')
+            .setDescription('Show time left on timer'))
+        .addSubcommand(subcommand =>
+            subcommand
             .setName('pause')
             .setDescription('Pause the timer'))
         .addSubcommand(subcommand =>
@@ -57,18 +69,39 @@ module.exports = {
             resumeTimer(interaction, key, channel);
         } else if(interaction.options.getSubcommand() === 'cancel') {
             cancelTimer(interaction, key, connection);
-        }
+        } else if(interaction.options.getSubcommand() === 'remaining') {
+            remaining(interaction, key);
+        } 
         
     },
 };
+
+async function remaining(interaction, key) {
+    if(timers[key]) {
+        const time = timers[key].timeRemaining;
+
+        const split = timeSplit(time);
+
+        if (timers[key].running) {
+            await interaction.reply(`The timer has ${split[0]} hours, ${split[1]} minutes, and ${split[2]} seconds left`);
+        } else {
+            await interaction.reply(`The timer is currently paused with ${split[0]} hours, ${split[1]} minutes, and ${split[2]} seconds time remaining`);
+        }
+    } else {
+        await interaction.reply('No timer is set!');
+    }
+}
 
 async function pauseTimer(interaction, key) {
     if (timers[key]) {
         const timeUsed = Date.now() - timers[key].startTime;
         timers[key].timeRemaining = timers[key].totalTime - timeUsed;
-
+        timers[key].running = status.paused;
         clearInterval(timers[key].ID);
-        await interaction.reply(`Timer paused! ${timers[key].timeRemaining / 60000} minutes left`);
+
+        const split = timeSplit(timers[key].timeRemaining );
+
+        await interaction.reply(`Timer paused! ${split[0]} hours, ${split[1]} minutes, and ${split[2]} seconds left`);
     } else {
         await interaction.reply('No timer to pause.');
     }
@@ -77,18 +110,21 @@ async function resumeTimer(interaction, key, channel) {
     if (timers[key]) {
         timers[key].startTime = Date.now();
         const connection = getVoiceConnection(interaction.guild.id);
+        timers[key].running = status.running;
         timers[key].ID = timer(timers[key].startTime, timers[key].timeRemaining, key, channel, connection);
 
-        await interaction.reply('Timer resumed!');
+        const split = timeSplit(timers[key].timeRemaining );
+
+        await interaction.reply(`Timer resumed for ${split[0]} hours, ${split[1]} minutes, and ${split[2]} seconds`);
     } else {
         await interaction.reply('No timer to resume.');
     } 
 }
 
-async function cancelTimer(interaction, key) {
+async function cancelTimer(interaction, key, connection) {
 
     if (timers[key]) {
-        clearInterval(timers[key]);
+        clearInterval(timers[key].ID);
         delete timers[key]; 
         await interaction.reply('Timer cancelled!');
         if(connection) { connection.destroy(); }
@@ -112,7 +148,7 @@ async function setTimer(interaction, key, channel)  {
     if (timeToSet == 0) { 
         await interaction.editReply('Can\'t set a timer with no duration!');
         return;
-    } else { await interaction.editReply(`You have set a timer for ${hours} hours, ${minutes} minutes, ${seconds} seconds`); }
+    } else { await interaction.editReply(`You have set a timer for ${hours / 3600000} hours, ${minutes / 60000} minutes, ${seconds / 1000} seconds`); }
 
     const connection = joinVoiceChannel({
         channelId: channel.id,
@@ -128,23 +164,29 @@ async function setTimer(interaction, key, channel)  {
         ID: intervalID,
         startTime: start,
         totalTime: timeToSet,
-        timeRemaining : timeToSet //was just set
+        timeRemaining: timeToSet, //was just set
+        running: status.running,
     };
 }
 
 function timer(startTime, timeToSet, key, channel, connection) {
-    return intervalID = setInterval(() => {
+    const intervalID = setInterval(() => {
         if(!channel) { 
             console.log('No connection! Timer stoped');
             return; 
         }
+
+        timers[key].timeRemaining = timeToSet - (Date.now() - startTime);
         if (checkExpired(startTime, timeToSet)) {
             
             console.log('TIMER GOING OFF');
             //alarm(connection);
             clearInterval(intervalID);
+            delete timers[key];
         }
     }, 1000);
+
+    return intervalID;
 }
 
 
@@ -170,4 +212,12 @@ function checkExpired(startTime, totalTime) {
     } else {
         return false;
     }
+}
+
+function timeSplit(time) {
+    const hours = modulo(time, 3600000);
+    const minutes = modulo(hours[1], 60000);
+    const seconds = minutes[1] / 1000;
+
+    return [hours[0], minutes[0], seconds];
 }
