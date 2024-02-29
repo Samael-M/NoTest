@@ -5,8 +5,6 @@ const path = require('node:path');
 const { subscribe } = require('node:diagnostics_channel');
 
 const timers = {};
-const holds = {};
-
 const status = { 
     running: true,
     paused: false,
@@ -180,7 +178,7 @@ function timer(startTime, timeToSet, key, channel, connection) {
         if (checkExpired(startTime, timeToSet)) {
             
             console.log('TIMER GOING OFF');
-            //alarm(connection);
+            alarm(connection);
             clearInterval(intervalID);
             delete timers[key];
         }
