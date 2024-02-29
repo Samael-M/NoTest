@@ -14,5 +14,12 @@ commands:
 &emsp;pause - pause current timer<br />
 &emsp;resume - resume current timer<br />
 &emsp;cancel - cancel current timer<br />
+
+/stopwatch<br />
+&emsp;start - starts stopwatch<br />
+&emsp;pause - pause stopwatch<br />
+&emsp;resume - resume stopwatch<br />
+&emsp;stop - Stop stopwatch and display time<br />
+&emsp;get-time - Show status of stopwatch and current time
   
 /leave - Makes bot leave voice channel
