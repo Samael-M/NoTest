@@ -1,3 +1,23 @@
 TODO:
     Timer   - Retest timer after changes
             - add different timer 'going off' methods. Send DM, @User message in chat or audio
+
+
+I'm not entirely sure if I want to do this, but maybe. The idea is a sort of time sheet so you can 'clock in' and out of 'work'.
+feature ideas
+    - Various task/types of work that you could clock into
+    - Store each users time sheets
+    - Users in a server could look at the timesheets of other users to see how much time they've spent and on what task
+
+/clockin                | clock into task, or create new task
+    option: taskname
+    subcommands:
+    create task
+
+
+/clockout               | clock out
+/review                 | get info on timesheet of a user
+    option: User
+
+What would this require?
+Creating/Reading/Writing local files to track User data.
